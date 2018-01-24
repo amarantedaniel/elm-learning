@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (on, keyCode, onInput)
+import Html.Events exposing (on, keyCode, onInput, onCheck)
 import Json.Decode as Json
 
 
@@ -13,7 +13,8 @@ type FilterState
 
 
 type alias Todo =
-    { title : String
+    { id : Int
+    , title : String
     , completed : Bool
     , editing : Bool
     }
@@ -23,24 +24,23 @@ type alias Model =
     { todos : List Todo
     , todo : Todo
     , filter : FilterState
+    , nextId : Int
     }
 
 
 initialModel : Model
 initialModel =
     { todos = []
-    , todo =
-        { title = ""
-        , completed = False
-        , editing = False
-        }
+    , todo = newTodo
     , filter = All
+    , nextId = 1
     }
 
 
 newTodo : Todo
 newTodo =
-    { title = ""
+    { id = 0
+    , title = ""
     , completed = False
     , editing = False
     }
@@ -53,7 +53,7 @@ newTodo =
 type Msg
     = UpdateTitle String
     | Add
-    | Complete Todo
+    | Toggle Todo
     | Delete Todo
     | Filter FilterState
 
@@ -74,11 +74,19 @@ update msg model =
         Add ->
             { model
                 | todos = model.todo :: model.todos
-                , todo = newTodo
+                , todo = { newTodo | id = model.nextId }
+                , nextId = model.nextId + 1
             }
 
-        Complete todo ->
-            model
+        Toggle todo ->
+            let
+                updateTodo thisTodo =
+                    if thisTodo.id == todo.id then
+                        { thisTodo | completed = not todo.completed }
+                    else
+                        thisTodo
+            in
+                { model | todos = List.map updateTodo model.todos }
 
         Delete todo ->
             model
@@ -129,7 +137,13 @@ todoView : Todo -> Html Msg
 todoView todo =
     li [ classList [ ( "completed", todo.completed ) ] ]
         [ div [ class "view" ]
-            [ input [ class "toggle", type_ "checkbox", checked todo.completed ] []
+            [ input
+                [ class "toggle"
+                , type_ "checkbox"
+                , checked todo.completed
+                , onCheck (\_ -> Toggle todo)
+                ]
+                []
             , label [] [ text todo.title ]
             , button [ class "destroy" ] []
             ]
