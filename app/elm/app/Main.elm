@@ -56,6 +56,7 @@ type Msg
     | Toggle Todo
     | Delete Todo
     | Filter FilterState
+    | ClearCompleted
 
 
 update : Msg -> Model -> Model
@@ -93,6 +94,9 @@ update msg model =
 
         Filter filterState ->
             { model | filter = filterState }
+
+        ClearCompleted ->
+            { model | todos = List.filter (\todo -> not todo.completed) model.todos }
 
 
 filteredTodos : Model -> List Todo
@@ -157,7 +161,11 @@ view model =
                 , filterItemView model Active
                 , filterItemView model Completed
                 ]
-            , button [ class "clear-completed" ] [ text "Clear completed" ]
+            , button
+                [ class "clear-completed"
+                , onClick ClearCompleted
+                ]
+                [ text "Clear completed" ]
             ]
         ]
 
