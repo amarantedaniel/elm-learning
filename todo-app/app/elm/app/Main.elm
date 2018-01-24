@@ -46,6 +46,11 @@ newTodo =
     }
 
 
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel, Cmd.none )
+
+
 
 -- Update
 
@@ -59,7 +64,7 @@ type Msg
     | ClearCompleted
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateTitle str ->
@@ -70,7 +75,7 @@ update msg model =
                 updatedTodo =
                     { todo | title = str }
             in
-                { model | todo = updatedTodo }
+                { model | todo = updatedTodo } ! []
 
         Add ->
             { model
@@ -78,6 +83,7 @@ update msg model =
                 , todo = { newTodo | id = model.nextId }
                 , nextId = model.nextId + 1
             }
+                ! []
 
         Toggle todo ->
             let
@@ -87,16 +93,16 @@ update msg model =
                     else
                         thisTodo
             in
-                { model | todos = List.map updateTodo model.todos }
+                { model | todos = List.map updateTodo model.todos } ! []
 
         Delete todo ->
-            { model | todos = List.filter (\mappedTodo -> todo.id /= mappedTodo.id) model.todos }
+            { model | todos = List.filter (\mappedTodo -> todo.id /= mappedTodo.id) model.todos } ! []
 
         Filter filterState ->
-            { model | filter = filterState }
+            { model | filter = filterState } ! []
 
         ClearCompleted ->
-            { model | todos = List.filter (\todo -> not todo.completed) model.todos }
+            { model | todos = List.filter (\todo -> not todo.completed) model.todos } ! []
 
 
 filteredTodos : Model -> List Todo
@@ -203,10 +209,24 @@ todoView todo =
         ]
 
 
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- MAIN
+
+
 main : Program Never Model Msg
 main =
-    Html.beginnerProgram
-        { model = initialModel
-        , update = update
+    program
+        { init = init
         , view = view
+        , update = update
+        , subscriptions = subscriptions
         }
